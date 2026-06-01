@@ -1,0 +1,48 @@
+/* ═══════════════════════════════════════════════════════════════
+   PRECEPTORA.CSS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Indicadores de lectura ────────────────────────────────────── */
+.leyo-si {
+    color: var(--verde);
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.leyo-no {
+    color: var(--rojo);
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Select de estado inline ───────────────────────────────────── */
+.select-estado {
+    padding: .28rem .55rem;
+    border: 1.5px solid var(--borde);
+    border-radius: 6px;
+    font-size: .82rem;
+    cursor: pointer;
+    background: #f5f8ff;
+    color: var(--texto);
+    transition: border-color var(--transition);
+}
+.select-estado:focus { border-color: var(--acento); outline: none; }
+
+/* ── Acciones en tabla ─────────────────────────────────────────── */
+.td-acciones {
+    display: flex;
+    gap: .35rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.td-leyo { text-align: center; }
+
+/* ── Responsive tabla panel ────────────────────────────────────── */
+@media (max-width: 768px) {
+    .td-acciones { flex-direction: column; align-items: flex-start; }
+}

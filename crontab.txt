@@ -1,0 +1,1 @@
+* * * * * php /app/cron/check_previas.php >> /dev/null 2>&1

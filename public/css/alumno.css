@@ -1,0 +1,125 @@
+/* ═══════════════════════════════════════════════════════════════
+   ALUMNO.CSS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Banner push ───────────────────────────────────────────────── */
+.banner-push {
+    background: linear-gradient(135deg, #fef9e7, #fef3cd);
+    border: 1.5px solid var(--amarillo);
+    color: #7d6608;
+    padding: .75rem 1.1rem;
+    border-radius: var(--radio);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    font-size: .88rem;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(240,192,64,.2);
+}
+.banner-push button {
+    background: var(--amarillo);
+    border: none;
+    border-radius: 6px;
+    padding: .35rem .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: .85rem;
+    color: #5a4500;
+    transition: background var(--transition);
+}
+.banner-push button:hover { background: #d4a800; }
+.btn-cerrar {
+    background: transparent !important;
+    color: #7d6608;
+    font-size: 1.1rem;
+    padding: 0 .3rem !important;
+    margin-left: auto;
+    border: none;
+    cursor: pointer;
+}
+
+/* ── Cards de hoy ──────────────────────────────────────────────── */
+.cards-hoy {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.1rem;
+    margin-bottom: 1.75rem;
+}
+
+.card-previa {
+    background: var(--fondo-card);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra);
+    padding: 1.35rem;
+    border-left: 5px solid var(--acento);
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    transition: box-shadow var(--transition), transform var(--transition);
+    border: 1px solid var(--borde);
+    border-left: 5px solid var(--acento);
+}
+.card-previa:hover { box-shadow: var(--sombra-lg); transform: translateY(-2px); }
+
+.card-materia {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primario);
+}
+
+.card-info {
+    font-size: .87rem;
+    color: var(--texto-suave);
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+.card-info::before { content: '📍'; font-size: .85rem; }
+
+.card-countdown {
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--secundario);
+    background: #eef4ff;
+    padding: .35rem .7rem;
+    border-radius: 6px;
+    display: inline-block;
+    border: 1px solid #c8d8f0;
+}
+.card-countdown.ahora {
+    color: var(--rojo);
+    background: #fdecea;
+    border-color: #f5b7b1;
+    animation: pulso 1s infinite;
+}
+
+@keyframes pulso {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .7; }
+}
+
+.btn-confirmar {
+    margin-top: .25rem;
+    padding: .45rem 1rem;
+    background: linear-gradient(135deg, var(--verde), #1e8449);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: .85rem;
+    transition: opacity var(--transition), transform var(--transition);
+    align-self: flex-start;
+}
+.btn-confirmar:not(:disabled):hover { opacity: .88; transform: translateY(-1px); }
+.btn-confirmar:disabled {
+    background: #c8d8c8;
+    color: #5a7a5a;
+    cursor: default;
+}
+
+/* ── Responsive cards ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .cards-hoy { grid-template-columns: 1fr; }
+}
