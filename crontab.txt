@@ -1,1 +1,1 @@
-* * * * * php /app/cron/check_previas.php >> /dev/null 2>&1
+* * * * * php /app/cron/check_notificaciones.php >> /dev/null 2>&1

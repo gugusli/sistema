@@ -9,12 +9,9 @@ self.addEventListener('activate', e => {
 // Cache offline
 const CACHE = 'previas-v1';
 const OFFLINE_URLS = [
-    '/alumno/dashboard',
-    '/alumno/historial',
-    '/alumno/calendario',
+    '/alumno/panel',
     '/public/css/base.css',
     '/public/css/alumno.css',
-    '/public/js/alumno.js',
     '/public/js/push.js',
 ];
 
@@ -44,12 +41,12 @@ self.addEventListener('fetch', e => {
 });
 
 self.addEventListener('push', e => {
-    let data = { titulo: 'Previa', cuerpo: 'Tenés una previa próxima.', url: '/' };
+    let data = { titulo: 'E.E.S.T. N°5', cuerpo: 'Tenés una notificación.', url: '/' };
     try { data = e.data.json(); } catch (_) {}
     e.waitUntil(
         self.registration.showNotification(data.titulo, {
             body: data.cuerpo,
-            icon: '/public/icon.png',
+            icon: '/public/logo.png',
             data: { url: data.url }
         })
     );

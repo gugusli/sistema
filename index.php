@@ -13,11 +13,9 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/src/Auth.php';
 require_once __DIR__ . '/src/Alumno.php';
-require_once __DIR__ . '/src/Previa.php';
-require_once __DIR__ . '/src/Notificacion.php';
-require_once __DIR__ . '/src/Confirmacion.php';
-require_once __DIR__ . '/src/Boletin.php';
 require_once __DIR__ . '/src/Recursada.php';
+require_once __DIR__ . '/src/Intensificacion.php';
+require_once __DIR__ . '/src/Notificacion.php';
 
 session_start();
 
@@ -48,7 +46,7 @@ function jsonBody(): array {
 
 if ($uri === '/' && $method === 'GET') {
     $rol = $_SESSION['rol'] ?? '';
-    if ($rol === 'alumno')      redirect('/alumno/dashboard');
+    if ($rol === 'alumno')      redirect('/alumno/panel');
     if ($rol === 'preceptora')  redirect('/preceptora/panel');
     redirect('/login');
 }
@@ -67,7 +65,7 @@ if ($uri === '/login' && $method === 'POST') {
             require __DIR__ . '/views/login.php';
             exit;
         }
-        redirect('/alumno/dashboard');
+        redirect('/alumno/panel');
     } elseif ($modo === 'preceptora') {
         $usuario  = trim($_POST['usuario']  ?? '');
         $password = trim($_POST['password'] ?? '');
@@ -90,45 +88,13 @@ if ($uri === '/logout') {
 
 // ── Rutas alumno ─────────────────────────────────────────────────────────────
 
-if ($uri === '/alumno/dashboard' && $method === 'GET') {
+if ($uri === '/alumno/panel' && $method === 'GET') {
     Auth::requireAlumno();
-    require __DIR__ . '/views/alumno/dashboard.php';
+    require __DIR__ . '/views/alumno/panel.php';
     exit;
 }
 
-if ($uri === '/alumno/historial' && $method === 'GET') {
-    Auth::requireAlumno();
-    require __DIR__ . '/views/alumno/historial.php';
-    exit;
-}
-
-if ($uri === '/alumno/trayectoria' && $method === 'GET') {
-    Auth::requireAlumno();
-    require __DIR__ . '/views/alumno/trayectoria.php';
-    exit;
-}
-
-if ($uri === '/alumno/calendario' && $method === 'GET') {
-    Auth::requireAlumno();
-    require __DIR__ . '/views/alumno/calendario.php';
-    exit;
-}
-
-if ($uri === '/alumno/boletin' && $method === 'GET') {
-    Auth::requireAlumno();
-    require __DIR__ . '/views/alumno/boletin.php';
-    exit;
-}
-
-if ($uri === '/api/confirmacion' && $method === 'POST') {
-    Auth::requireAlumno();
-    $body      = jsonBody();
-    $previa_id = (int)($body['previa_id'] ?? 0);
-    $alumno_id = (int)$_SESSION['id'];
-    if ($previa_id <= 0) jsonResponse(['error' => 'previa_id inválido'], 400);
-    Confirmacion::confirmar($previa_id, $alumno_id);
-    jsonResponse(['ok' => true]);
-}
+// ── Push notifications ─────────────────────────────────────────────────────────
 
 if ($uri === '/api/push/subscribe' && $method === 'POST') {
     Auth::requireAlumno();
@@ -145,6 +111,16 @@ if ($uri === '/api/push/subscribe' && $method === 'POST') {
 if ($uri === '/preceptora/panel' && $method === 'GET') {
     Auth::requirePreceptora();
     require __DIR__ . '/views/preceptora/panel.php';
+    exit;
+}
+
+// AJAX: devuelve el HTML del panel de un alumno para el modal
+if (preg_match('#^/preceptora/panel/alumno/(\d+)$#', $uri, $m) && $method === 'GET') {
+    Auth::requirePreceptora();
+    $id     = (int)$m[1];
+    $alumno = Alumno::getById($id);
+    if (!$alumno) { http_response_code(404); echo 'Alumno no encontrado'; exit; }
+    require __DIR__ . '/views/preceptora/panel_alumno.php';
     exit;
 }
 
@@ -194,175 +170,7 @@ if ($uri === '/preceptora/alumnos/eliminar' && $method === 'POST') {
     redirect('/preceptora/alumnos');
 }
 
-if ($uri === '/preceptora/previa/nueva' && $method === 'GET') {
-    Auth::requirePreceptora();
-    require __DIR__ . '/views/preceptora/nueva_previa.php';
-    exit;
-}
-
-if ($uri === '/preceptora/previa/nueva' && $method === 'POST') {
-    Auth::requirePreceptora();
-    $data = [
-        'alumno_id'  => (int)($_POST['alumno_id']  ?? 0),
-        'materia_id' => (int)($_POST['materia_id'] ?? 0),
-        'fecha'      => trim($_POST['fecha'] ?? ''),
-        'estado'     => 'Pendiente',
-    ];
-    if (!$data['alumno_id'] || !$data['materia_id'] || !$data['fecha']) {
-        $error = 'Todos los campos son obligatorios.';
-        require __DIR__ . '/views/preceptora/nueva_previa.php';
-        exit;
-    }
-    try {
-        Previa::create($data);
-        redirect('/preceptora/panel');
-    } catch (PDOException $e) {
-        $error = 'Error al guardar: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
-        require __DIR__ . '/views/preceptora/nueva_previa.php';
-        exit;
-    }
-}
-
-if (str_starts_with($uri, '/preceptora/previa/editar') && $method === 'GET') {
-    Auth::requirePreceptora();
-    require __DIR__ . '/views/preceptora/editar_previa.php';
-    exit;
-}
-
-if ($uri === '/preceptora/previa/editar' && $method === 'POST') {
-    Auth::requirePreceptora();
-    $id   = (int)($_POST['id'] ?? 0);
-    $data = [
-        'alumno_id'  => (int)($_POST['alumno_id']  ?? 0),
-        'materia_id' => (int)($_POST['materia_id'] ?? 0),
-        'fecha'      => trim($_POST['fecha'] ?? ''),
-    ];
-    if (!$id || !$data['alumno_id'] || !$data['materia_id'] || !$data['fecha']) {
-        $error = 'Todos los campos son obligatorios.';
-        require __DIR__ . '/views/preceptora/editar_previa.php';
-        exit;
-    }
-    Previa::update($id, $data);
-    redirect('/preceptora/panel');
-}
-
-if ($uri === '/preceptora/previa/estado' && $method === 'POST') {
-    Auth::requirePreceptora();
-    $body   = jsonBody();
-    $id     = (int)($body['id']     ?? 0);
-    $estado = $body['estado'] ?? '';
-    if (!$id || !in_array($estado, ['Pendiente','Aprobada','Ausente'], true)) {
-        jsonResponse(['error' => 'Datos inválidos'], 400);
-    }
-    Previa::updateEstado($id, $estado);
-    jsonResponse(['ok' => true]);
-}
-
-if ($uri === '/preceptora/previa/eliminar' && $method === 'POST') {
-    Auth::requirePreceptora();
-    $body = jsonBody();
-    $id   = (int)($body['id'] ?? $_POST['id'] ?? 0);
-    if ($id > 0) Previa::delete($id);
-    jsonResponse(['ok' => true]);
-}
-
-// ── Rutas preceptora — búsqueda y ficha ──────────────────────────────────────
-
-if ($uri === '/preceptora/buscar' && $method === 'GET') {
-    Auth::requirePreceptora();
-    $q = trim($_GET['q'] ?? '');
-    if ($q === '') jsonResponse([]);
-    jsonResponse(Alumno::buscar($q));
-}
-
-if (str_starts_with($uri, '/preceptora/ficha') && $method === 'GET') {
-    Auth::requirePreceptora();
-    require __DIR__ . '/views/preceptora/ficha.php';
-    exit;
-}
-
-// ── Rutas preceptora — boletines ─────────────────────────────────────────────
-
-if ($uri === '/preceptora/boletines' && $method === 'GET') {
-    Auth::requirePreceptora();
-    require __DIR__ . '/views/preceptora/boletines.php';
-    exit;
-}
-
-if ($uri === '/preceptora/boletin/alumno' && $method === 'GET') {
-    Auth::requirePreceptora();
-    $id = (int)($_GET['alumno_id'] ?? 0);
-    if (!$id) redirect('/preceptora/boletines');
-    $alumno  = Alumno::getById($id);
-    if (!$alumno) redirect('/preceptora/boletines');
-    $boletin = Boletin::getBoletinAlumno($id);
-    $periodos = Boletin::getPeriodos();
-    $materias = DB::get()->query('SELECT * FROM materias ORDER BY nombre')->fetchAll();
-    require __DIR__ . '/views/preceptora/boletin_alumno.php';
-    exit;
-}
-
-if ($uri === '/preceptora/boletin/nota' && $method === 'POST') {
-    Auth::requirePreceptora();
-    $body       = jsonBody();
-    $alumno_id  = (int)($body['alumno_id']  ?? 0);
-    $materia_id = (int)($body['materia_id'] ?? 0);
-    $periodo_id = (int)($body['periodo_id'] ?? 0);
-    $nota       = (float)($body['nota']     ?? 0);
-    if (!$alumno_id || !$materia_id || !$periodo_id || $nota < 1 || $nota > 10) {
-        jsonResponse(['error' => 'Datos inválidos'], 400);
-    }
-    Boletin::upsertNota($alumno_id, $materia_id, $periodo_id, $nota);
-    jsonResponse(['ok' => true]);
-}
-
-if ($uri === '/preceptora/boletin/nota/eliminar' && $method === 'POST') {
-    Auth::requirePreceptora();
-    $body       = jsonBody();
-    $alumno_id  = (int)($body['alumno_id']  ?? 0);
-    $materia_id = (int)($body['materia_id'] ?? 0);
-    $periodo_id = (int)($body['periodo_id'] ?? 0);
-    Boletin::deleteNota($alumno_id, $materia_id, $periodo_id);
-    jsonResponse(['ok' => true]);
-}
-
-if ($uri === '/preceptora/periodos' && $method === 'POST') {
-    Auth::requirePreceptora();
-    $nombre = trim($_POST['nombre'] ?? '');
-    $anio   = (int)($_POST['anio']  ?? 0);
-    $orden  = (int)($_POST['orden'] ?? 0);
-    if ($nombre === '' || !$anio || !$orden) {
-        $error = 'Todos los campos son obligatorios.';
-    } else {
-        try {
-            Boletin::createPeriodo($nombre, $anio, $orden);
-        } catch (PDOException $e) {
-            $error = 'Error: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
-        }
-    }
-    redirect('/preceptora/boletines');
-}
-
-if ($uri === '/preceptora/periodos/eliminar' && $method === 'POST') {
-    Auth::requirePreceptora();
-    $id = (int)($_POST['id'] ?? 0);
-    if ($id > 0) Boletin::deletePeriodo($id);
-    redirect('/preceptora/boletines');
-}
-
-if ($uri === '/preceptora/recursantes' && $method === 'GET') {
-    Auth::requirePreceptora();
-    require __DIR__ . '/views/preceptora/recursantes.php';
-    exit;
-}
-
-if ($uri === '/preceptora/planilla' && $method === 'GET') {
-    Auth::requirePreceptora();
-    require __DIR__ . '/views/preceptora/planilla.php';
-    exit;
-}
-
-// ── Rutas preceptora — recursadas manuales ────────────────────────────────────
+// ── Rutas preceptora — recursadas ─────────────────────────────────────────────
 
 if ($uri === '/preceptora/recursada/crear' && $method === 'POST') {
     Auth::requirePreceptora();
@@ -371,9 +179,20 @@ if ($uri === '/preceptora/recursada/crear' && $method === 'POST') {
     $materia_id = (int)($body['materia_id'] ?? 0);
     $anio       = (int)($body['anio']       ?? date('Y'));
     $obs        = trim($body['observacion'] ?? '');
+    $fecha      = trim($body['fecha']       ?? '');
+    $horario    = trim($body['horario']     ?? '');
     if (!$alumno_id || !$materia_id) jsonResponse(['error' => 'Datos inválidos'], 400);
-    $id = Recursada::crear($alumno_id, $materia_id, $anio, $obs);
+    $id = Recursada::crear($alumno_id, $materia_id, $anio, $obs, $fecha ?: null, $horario ?: null);
     jsonResponse(['ok' => true, 'id' => $id]);
+}
+
+if ($uri === '/preceptora/recursada/toggle' && $method === 'POST') {
+    Auth::requirePreceptora();
+    $body = jsonBody();
+    $id   = (int)($body['id'] ?? 0);
+    if (!$id) jsonResponse(['error' => 'id inválido'], 400);
+    $nuevo = Recursada::toggleAprobada($id);
+    jsonResponse(['ok' => true, 'aprobada' => $nuevo]);
 }
 
 if ($uri === '/preceptora/recursada/eliminar' && $method === 'POST') {
@@ -381,6 +200,38 @@ if ($uri === '/preceptora/recursada/eliminar' && $method === 'POST') {
     $body = jsonBody();
     $id   = (int)($body['id'] ?? 0);
     if ($id > 0) Recursada::eliminar($id);
+    jsonResponse(['ok' => true]);
+}
+
+// ── Intensificaciones ─────────────────────────────────────────────────────────
+
+if ($uri === '/preceptora/intensificacion/guardar' && $method === 'POST') {
+    Auth::requirePreceptora();
+    $body       = jsonBody();
+    $alumno_id  = (int)($body['alumno_id']  ?? 0);
+    $materia_id = (int)($body['materia_id'] ?? 0);
+    $anio       = (int)($body['anio']       ?? date('Y'));
+    if (!$alumno_id || !$materia_id || empty($body['semana1_inicio']) || empty($body['semana2_inicio'])) {
+        jsonResponse(['error' => 'Datos incompletos'], 400);
+    }
+    $id = Intensificacion::upsert($alumno_id, $materia_id, $anio, $body);
+    jsonResponse(['ok' => true, 'id' => $id]);
+}
+
+if ($uri === '/preceptora/intensificacion/toggle' && $method === 'POST') {
+    Auth::requirePreceptora();
+    $body = jsonBody();
+    $id   = (int)($body['id'] ?? 0);
+    if (!$id) jsonResponse(['error' => 'id inválido'], 400);
+    $nuevo = Intensificacion::toggleAprobada($id);
+    jsonResponse(['ok' => true, 'aprobada' => $nuevo]);
+}
+
+if ($uri === '/preceptora/intensificacion/eliminar' && $method === 'POST') {
+    Auth::requirePreceptora();
+    $body = jsonBody();
+    $id   = (int)($body['id'] ?? 0);
+    if ($id > 0) Intensificacion::eliminar($id);
     jsonResponse(['ok' => true]);
 }
 
@@ -395,10 +246,9 @@ if ($uri === '/preceptora/alumnos/editar' && $method === 'POST') {
     if (!$id || !$nombre || !$curso) jsonResponse(['error' => 'Datos inválidos'], 400);
     try {
         Alumno::update($id, $nombre, $curso, $legajo);
-        redirect('/preceptora/ficha?id=' . $id);
+        redirect('/preceptora/panel');
     } catch (PDOException $e) {
-        $error = htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
-        redirect('/preceptora/ficha?id=' . $id . '&error=' . urlencode($error));
+        redirect('/preceptora/panel');
     }
 }
 

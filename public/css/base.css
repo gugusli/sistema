@@ -257,6 +257,8 @@ img { max-width: 100%; height: auto; display: block; }
 .btn-sm:hover { background: var(--secundario); color: #fff; text-decoration: none; }
 .btn-danger { border-color: var(--rojo); color: var(--rojo); }
 .btn-danger:hover { background: var(--rojo); color: #fff; border-color: var(--rojo); }
+.btn-success { border-color: var(--verde); color: var(--verde); }
+.btn-success:hover { background: var(--verde); color: #fff; border-color: var(--verde); }
 
 /* ── Badges ────────────────────────────────────────────────────── */
 .badge {

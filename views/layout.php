@@ -39,16 +39,9 @@ $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
     <div class="navbar-links" id="nav-links" role="menubar">
         <?php if ($rol === 'alumno'): ?>
-            <a href="/alumno/dashboard"   <?= $uri === '/alumno/dashboard'   ? 'class="active"' : '' ?> role="menuitem">Inicio</a>
-            <a href="/alumno/calendario"  <?= $uri === '/alumno/calendario'  ? 'class="active"' : '' ?> role="menuitem">Calendario</a>
-            <a href="/alumno/historial"   <?= $uri === '/alumno/historial'   ? 'class="active"' : '' ?> role="menuitem">Historial</a>
-            <a href="/alumno/trayectoria" <?= $uri === '/alumno/trayectoria' ? 'class="active"' : '' ?> role="menuitem">Trayectoria</a>
+            <a href="/alumno/panel" <?= $uri === '/alumno/panel' ? 'class="active"' : '' ?> role="menuitem">Inicio</a>
         <?php elseif ($rol === 'preceptora'): ?>
-            <a href="/preceptora/panel"       <?= $uri === '/preceptora/panel'       ? 'class="active"' : '' ?> role="menuitem">Panel</a>
-            <a href="/preceptora/alumnos"     <?= $uri === '/preceptora/alumnos'     ? 'class="active"' : '' ?> role="menuitem">Alumnos</a>
-            <a href="/preceptora/ficha"       <?= str_starts_with($uri, '/preceptora/ficha') ? 'class="active"' : '' ?> role="menuitem">Legajos</a>
-            <a href="/preceptora/planilla"    <?= $uri === '/preceptora/planilla'    ? 'class="active"' : '' ?> role="menuitem">Planilla</a>
-            <a href="/preceptora/recursantes" <?= $uri === '/preceptora/recursantes' ? 'class="active"' : '' ?> role="menuitem">Recursantes</a>
+            <a href="/preceptora/panel" <?= $uri === '/preceptora/panel' ? 'class="active"' : '' ?> role="menuitem">Inicio</a>
         <?php endif; ?>
         <span class="navbar-user" title="<?= $nombre ?>">👤 <?= $nombre ?></span>
         <a href="/logout" class="btn-logout" role="menuitem">Salir</a>
@@ -68,8 +61,6 @@ $uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 <?php if ($rol === 'alumno'): ?>
 <script src="/public/js/push.js"></script>
 <script src="/public/js/alumno.js"></script>
-<?php elseif ($rol === 'preceptora'): ?>
-<script src="/public/js/preceptora.js"></script>
 <?php endif; ?>
 
 <script>

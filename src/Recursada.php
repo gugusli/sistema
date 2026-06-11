@@ -28,20 +28,32 @@ class Recursada {
         return $stmt->fetchAll();
     }
 
-    public static function crear(int $alumno_id, int $materia_id, int $anio, string $observacion = ''): int {
+    public static function crear(int $alumno_id, int $materia_id, int $anio, string $observacion = '', ?string $fecha = null, ?string $horario = null): int {
         $stmt = DB::get()->prepare(
-            'INSERT INTO recursadas (alumno_id, materia_id, anio, observacion)
-             VALUES (?, ?, ?, ?)
-             ON CONFLICT (alumno_id, materia_id, anio) DO UPDATE SET observacion = EXCLUDED.observacion
+            'INSERT INTO recursadas (alumno_id, materia_id, anio, observacion, fecha, horario)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT (alumno_id, materia_id, anio) DO UPDATE SET
+                observacion = EXCLUDED.observacion,
+                fecha       = EXCLUDED.fecha,
+                horario     = EXCLUDED.horario
              RETURNING id'
         );
-        $stmt->execute([$alumno_id, $materia_id, $anio, $observacion ?: null]);
+        $stmt->execute([$alumno_id, $materia_id, $anio, $observacion ?: null, $fecha ?: null, $horario ?: null]);
         return (int)$stmt->fetchColumn();
     }
 
     public static function eliminar(int $id): void {
         $stmt = DB::get()->prepare('DELETE FROM recursadas WHERE id = ?');
         $stmt->execute([$id]);
+    }
+
+    public static function toggleAprobada(int $id): bool {
+        $stmt = DB::get()->prepare(
+            'UPDATE recursadas SET aprobada = NOT aprobada WHERE id = ? RETURNING aprobada'
+        );
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ? (bool)$row['aprobada'] : false;
     }
 
     public static function existe(int $alumno_id, int $materia_id, int $anio): bool {
@@ -99,5 +111,34 @@ class Recursada {
     public static function extraerAnio(string $curso): int {
         preg_match('/(\d)/', $curso, $m);
         return isset($m[1]) ? (int)$m[1] : 0;
+    }
+
+    /**
+     * Retorna recursadas de un alumno separadas en recursa e intensifica,
+     * usando solo el año del curso del alumno (sin columna anio en materias).
+     */
+    public static function getByAlumnoDetalle(int $alumno_id): array {
+        $stmt = DB::get()->prepare(
+            'SELECT r.*, m.nombre AS materia_nombre,
+                    a.curso AS alumno_curso
+             FROM recursadas r
+             JOIN materias m ON m.id = r.materia_id
+             JOIN alumnos a ON a.id = r.alumno_id
+             WHERE r.alumno_id = ?
+             ORDER BY r.anio DESC, m.nombre ASC'
+        );
+        $stmt->execute([$alumno_id]);
+        $rows = $stmt->fetchAll();
+
+        foreach ($rows as &$r) {
+            $r['tipo'] = 'recursa';
+        }
+        unset($r);
+
+        return [
+            'recursa'     => $rows,
+            'intensifica' => [],
+            'anio_curso'  => self::extraerAnio($rows[0]['alumno_curso'] ?? ''),
+        ];
     }
 }
